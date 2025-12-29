@@ -1,0 +1,75 @@
+services:
+  # NATS Message Broker
+  nats:
+    image: nats:alpine
+    container_name: currency-monitor-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+    environment:
+      - NATS_MAX_PAYLOAD=8388608
+    volumes:
+      - nats_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/varz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - currency-network
+
+  # FastAPI Application
+  app:
+    build: .
+    container_name: currency-monitor-app
+    ports:
+      - "8000:8000"
+    environment:
+      - NATS_URL=nats://nats:4222
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "sleep 15 && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - currency-network
+
+  # CLI клиент для ручных операций
+  nats-cli:
+    image: natsio/nats-box:latest
+    container_name: currency-monitor-nats-cli
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["tail", "-f", "/dev/null"]
+    networks:
+      - currency-network
+
+  # Автоматический подписчик
+  nats-subscriber:
+    image: natsio/nats-box:latest
+    container_name: currency-monitor-nats-sub
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "sleep 20 && nats sub -s nats://nats:4222 currency.updates --raw"
+    networks:
+      - currency-network
+
+volumes:
+  nats_data:
+
+networks:
+  currency-network:
+    driver: bridge
