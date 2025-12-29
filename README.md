@@ -59,13 +59,10 @@ currency-monitor/
 ```bash
 # 1. Клонировать репозиторий
 git clone <repo-url>
-cd currency-monitor
+cd fastapi-currency-ws-nats
 
 # 2. Запустить с Docker Compose
-docker-compose up -d
-
-# 3. Проверить логи
-docker-compose logs -f app
+docker-compose up
 ```
 
 Приложение будет доступно:
@@ -92,9 +89,6 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 # Запустить контейнеры
 docker-compose up -d
-
-# Посмотреть логи
-docker-compose logs -f app
 
 # Остановить контейнеры
 docker-compose down
