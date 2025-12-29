@@ -1,4 +1,10 @@
-currency_monitor.db
+# Data files
+data/currency_monitor.db
+data/currency_monitor.db-*
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
 
 # Python gitignore (https://github.com/github/gitignore/blob/main/Python.gitignore)
 # Byte-compiled / optimized / DLL files
